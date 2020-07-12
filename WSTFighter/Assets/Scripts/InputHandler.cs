@@ -15,10 +15,10 @@ namespace WST
         UU,
         DD,
         BB,
-        ChargeB,
-        ChargeF,
-        ChargeD,
-        ChargeU,
+        Charge_BackToForward,
+        Charge_ForwardToBack,
+        Charge_DownToUp,
+        Charge_UpToDown,
     }
 
     public enum Button
@@ -61,7 +61,9 @@ namespace WST
         StickInput previousStickInput;
         public float stickInputWindow;
         public float chargeTime;
-        float chargeTimer;
+        public float chargeTimer;
+        float chargeWindowTimer;
+        public float chargeWindow;
         float stickInputTimer;
         bool charged => chargeTimer >= chargeTime;
         public CommandInput command;
@@ -100,7 +102,7 @@ namespace WST
             {
                 result = StickInput.UpBack;
             }
-            else if (stickX < -.5f && stickPos.y < - 0.5f)
+            else if (stickX < -.5f && stickPos.y < - 0.2f)
             {
                 result = StickInput.DownBack;
             }
@@ -182,23 +184,29 @@ namespace WST
                                 break;
                         }
                     }
-                }
-                else if (latestInputs.Count == 1  && charged)
-                {
-                    switch(latestInputs[0])
+                    else
                     {
-                        case StickInput.Up:
-                            result = CommandInput.ChargeU;
-                            break;
-                        case StickInput.Down:
-                            result = CommandInput.ChargeD;
-                            break;
-                        case StickInput.Forward:
-                            result = CommandInput.ChargeF;
-                            break;
-                        case StickInput.Back:
-                            result = CommandInput.ChargeB;
-                            break;
+                        if (charged)
+                        {
+                            if (first == StickInput.Back && second == StickInput.Forward)
+                            {
+                                result = CommandInput.Charge_BackToForward;
+                            }
+                            if (first == StickInput.Forward && second == StickInput.Back)
+                            {
+                                result = CommandInput.Charge_ForwardToBack;
+                            }
+                            if (first == StickInput.Up && second == StickInput.Down)
+                            {
+                                result = CommandInput.Charge_UpToDown;
+                            }
+                            if (first == StickInput.Down && second == StickInput.Up)
+                            {
+                                result = CommandInput.Charge_DownToUp;
+                            }
+
+                            chargeTimer = 0;
+                        }
                     }
                 }
             }
@@ -211,12 +219,21 @@ namespace WST
             if (previousStickInput != Stick())
             {
                 previousStickInput = latestStickInput;
+                chargeWindowTimer += Time.deltaTime;
+                if (chargeWindowTimer > chargeWindow)
+                {
+                    chargeTimer = 0;
+                    chargeWindowTimer = 0;
+                }
             }
             latestStickInput = Stick();
             if (latestStickInput == previousStickInput)
             {
                 stickInputTimer += Time.deltaTime;
-                chargeTimer += Time.deltaTime;
+                if(latestStickInput != StickInput.Neutral)
+                {
+                    chargeTimer += Time.deltaTime;
+                }
                 if (stickInputTimer >= stickInputWindow)
                 {
                     if (latestStickInput == StickInput.Neutral)
