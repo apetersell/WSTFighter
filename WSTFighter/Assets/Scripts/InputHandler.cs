@@ -23,6 +23,7 @@ namespace WST
 
     public enum Button
     {
+        None,
         A,
         B,
         X,
@@ -53,6 +54,7 @@ namespace WST
 
     public class InputHandler : MonoBehaviour
     {
+        public InputVisualizer visualizer;
         public int playerNum;
         public int directionMod = 1;
         Vector2 stickPos;
@@ -61,21 +63,17 @@ namespace WST
         StickInput previousStickInput;
         public float stickInputWindow;
         public float chargeTime;
-        public float chargeTimer;
+        float chargeTimer;
         float chargeWindowTimer;
         public float chargeWindow;
         float stickInputTimer;
         bool charged => chargeTimer >= chargeTime;
-        public CommandInput command;
 
         void Update()
         {
             stickPos = new Vector2(Input.GetAxis(InputManager.InputString(playerNum, "LeftStick_X")), -Input.GetAxis(InputManager.InputString(playerNum, "LeftStick_Y"))); 
             UpdateStickInputs();
-            if (Input.GetButtonDown(InputManager.InputString(playerNum, "AButton")))
-            {
-                command = Command();
-            }
+            HandleButtons();
         }
 
         public StickInput Stick ()
@@ -309,6 +307,36 @@ namespace WST
             else
             {
                 stickInputs.Clear();
+            }
+        }
+
+        void HandleButtons()
+        {
+            Button button = Button.None;
+            if (Input.GetButtonDown(InputManager.InputString(playerNum, "AButton")))
+            {
+                button = Button.A;
+            }
+            if (Input.GetButtonDown(InputManager.InputString(playerNum, "BButton")))
+            {
+                button = Button.B;
+            }
+            if (Input.GetButtonDown(InputManager.InputString(playerNum, "XButton")))
+            {
+                button = Button.X;
+            }
+            if (Input.GetButtonDown(InputManager.InputString(playerNum, "YButton")))
+            {
+                button = Button.Y;
+            }
+
+            if (button != Button.None)
+            {
+                FGInput input = new FGInput();
+                input.button = button;
+                input.stick = latestStickInput;
+                input.commandInput = Command();
+                visualizer.DoInput(input);
             }
         }
     }

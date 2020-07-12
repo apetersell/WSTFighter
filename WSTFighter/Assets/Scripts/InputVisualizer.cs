@@ -23,11 +23,12 @@ public class InputVisualizer : MonoBehaviour
     public Image LeftTrigger;
     public Image RightJoystick;
     public Image LeftJoystick;
+    public Text commandText;
     Vector2 leftStickStart;
     Vector2 rightStickStart;
     public float stickDistance;
-    public Vector2 leftStickPos;
-    public Vector2 rightStickPos;
+    Vector2 leftStickPos;
+    Vector2 rightStickPos;
 
     public Color inactiveColor;
 
@@ -60,5 +61,24 @@ public class InputVisualizer : MonoBehaviour
         DPad_Down.color = dPadInput.y < -.5f ? Color.red : inactiveColor;
         DPad_Right.color = dPadInput.x > .5f ? Color.red : inactiveColor;
         DPad_Left.color = dPadInput.x < -.5f ? Color.red : inactiveColor;
+    }
+
+    public void DoInput(FGInput input)
+    {
+        string direction = "";
+        string button = input.button.ToString();
+        if (input.commandInput != CommandInput.None)
+        {
+            direction = input.commandInput.ToString();
+        }
+        else
+        {
+            if (input.stick != StickInput.Neutral)
+            {
+                direction = input.stick.ToString();
+            }
+        }
+        commandText.text = string.Format("{0} {1}", direction, button);
+        
     }
 }
