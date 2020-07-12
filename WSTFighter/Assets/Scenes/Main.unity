@@ -353,6 +353,7 @@ GameObject:
   m_Component:
   - component: {fileID: 630145499}
   - component: {fileID: 630145500}
+  - component: {fileID: 630145501}
   m_Layer: 5
   m_Name: Controller
   m_TagString: Untagged
@@ -426,8 +427,26 @@ MonoBehaviour:
   LeftTrigger: {fileID: 648364987}
   RightJoystick: {fileID: 402313167}
   LeftJoystick: {fileID: 404900241}
-  stickDistance: 100
+  stickDistance: 20
+  leftStickPos: {x: 0, y: 0}
+  rightStickPos: {x: 0, y: 0}
   inactiveColor: {r: 1, g: 1, b: 1, a: 0.50980395}
+--- !u!114 &630145501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 630145498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 438012478ad7cba4eac8bea53783ef67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerNum: 1
+  stickInputs: 
+  stickPos: {x: 0, y: 0}
+  latestStickInput: 0
 --- !u!1 &648364985
 GameObject:
   m_ObjectHideFlags: 0
