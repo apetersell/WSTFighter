@@ -8,16 +8,23 @@ public class MatchManager : MonoBehaviour
     public static MatchManager instance;
 
     //References
+    public GameObject playerPrefab;
     public Player[] players;
     public PlayerUI[] playerUIs;
 
     //IG Stats
     public static float maxHP = 100;
     public static float maxTime = 100;
+    public float maxPlayerDistance;
+
+    public Vector3[] startingPositions;
 
     float comboCounter = 1;
     float timer;
     bool inCombo;
+
+    public LayerMask floorMask;
+    public CameraControl cam;
 
     private void Awake()
     {
@@ -26,10 +33,25 @@ public class MatchManager : MonoBehaviour
         {
             instance = this;
         }
+        players = new Player[2];
         for (int i = 0; i < playerUIs.Length; i++)
         {
             playerUIs[i].InitUI();
+            GameObject player = Instantiate(playerPrefab) as GameObject;
+            Player playerComponent = player.GetComponent<Player>();
+            playerComponent.playerNum = i + 1;
+            players[i] = playerComponent;
+            if (i > 0)
+            {
+                SpriteRenderer sprite = playerComponent.visual.gameObject.GetComponent<SpriteRenderer>();
+                sprite.color = Color.red;
+            }
         }
+        for (int i = 0; i < players.Length; i++)
+        {
+            players[i].InitPlayer();
+        }
+        cam.updating = true;
     }
     // Start is called before the first frame update
     void Start()
@@ -55,6 +77,10 @@ public class MatchManager : MonoBehaviour
                 playerUIs[0].ResetCombo();
                 inCombo = false;
             }
+        }
+        for (int i = 0; i < Input.GetJoystickNames().Length; i++)
+        {
+            Debug.Log(Input.GetJoystickNames()[i]);
         }
     }
 
