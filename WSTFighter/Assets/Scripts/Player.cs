@@ -40,6 +40,7 @@ public class Player : MonoBehaviour
     {
         DebugStuff();
         UpdateStickPosition();
+        DetectJump();
         if (Grounded())
         {
             Movement();
@@ -141,20 +142,21 @@ public class Player : MonoBehaviour
     public StickInput JumpInput()
     {
         StickInput result;
-        if (leftStickPos.x > -.5f && leftStickPos.x < .5f && leftStickPos.y > 0.05f)
+        float stickX = leftStickPos.x * facingMod;
+        if (stickX > -.5f && stickX < .5f && leftStickPos.y > 0.05f)
         {
             result = StickInput.Up;
             jumpAngle = new Vector2(0, 1);
         }
-        else if (leftStickPos.x > .5f && leftStickPos.y >= 0.05f)
+        else if (stickX > .5f && leftStickPos.y >= 0.05f)
         {
             result = StickInput.UpForward;
-            jumpAngle = new Vector2(facingMod * .5f, 1);
+            jumpAngle = new Vector2(facingMod * .25f, 1);
         }
-        else if (leftStickPos.x < -.5f && leftStickPos.y >= 0.05f)
+        else if (stickX < -.5f && leftStickPos.y >= 0.05f)
         {
             result = StickInput.UpBack;
-            jumpAngle = new Vector2((facingMod * .5f) * -1, 1);
+            jumpAngle = new Vector2(facingMod * -.25f, 1);
         }
         else
         {

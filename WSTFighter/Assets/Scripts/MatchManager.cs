@@ -52,6 +52,10 @@ public class MatchManager : MonoBehaviour
             players[i].InitPlayer();
         }
         cam.updating = true;
+        for (int i = 0; i < Input.GetJoystickNames().Length; i++)
+        {
+            Debug.Log(Input.GetJoystickNames()[i]);
+        }
     }
     // Start is called before the first frame update
     void Start()
@@ -77,10 +81,6 @@ public class MatchManager : MonoBehaviour
                 playerUIs[0].ResetCombo();
                 inCombo = false;
             }
-        }
-        for (int i = 0; i < Input.GetJoystickNames().Length; i++)
-        {
-            Debug.Log(Input.GetJoystickNames()[i]);
         }
     }
 
