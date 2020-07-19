@@ -55,9 +55,10 @@ namespace WST
 
     public class InputHandler : MonoBehaviour
     {
+        public Player player;
         public InputVisualizer visualizer;
-        public int playerNum;
-        public int directionMod = 1;
+        public int playerNum => player != null? player.playerNum : visualizer.playerNum;
+        public int directionMod => player != null? player.facingMod : 1;
         Vector2 stickPos;
         public List<StickInput> stickInputs = new List<StickInput>();
         StickInput latestStickInput;
@@ -69,16 +70,16 @@ namespace WST
         public float chargeWindow;
         float stickInputTimer;
         bool charged => chargeTimer >= chargeTime;
-        public Transform ryu;
-        float ryuX;
+        public bool charge;
 
         private void Awake()
         {
-            ryuX = ryu.localScale.x;
+            
         }
 
         void Update()
         {
+            charge = charged;
             stickPos = new Vector2(Input.GetAxis(InputManager.InputString(playerNum, "LeftStick_X")), -Input.GetAxis(InputManager.InputString(playerNum, "LeftStick_Y"))); 
             UpdateStickInputs();
             HandleButtons();
@@ -88,11 +89,11 @@ namespace WST
         {
             float stickX = stickPos.x * directionMod;
             StickInput result = StickInput.Neutral;
-            if (stickX > .5f && stickPos.y < 0.05f && stickPos.y > -0.05f)
+            if (stickX > .5f && stickPos.y < 0.5f && stickPos.y > -0.5f)
             {
                 result = StickInput.Forward;
             }
-            else if (stickX > .5f && stickPos.y >= 0.05f)
+            else if (stickX > .5f && stickPos.y >= 0.5f)
             {
                 result = StickInput.UpForward;
             }
@@ -104,7 +105,7 @@ namespace WST
             {
                 result = StickInput.Back;
             }
-            else if (stickX < -.5f && stickPos.y >= 0.05f)
+            else if (stickX < -.5f && stickPos.y >= 0.5f)
             {
                 result = StickInput.UpBack;
             }
@@ -210,19 +211,8 @@ namespace WST
                             {
                                 result = CommandInput.Charge_DownToUp;
                             }
-
-                            chargeTimer = 0;
                         }
                     }
-                }
-            }
-            else if (latestInputs.Count == 1)
-            {
-                if (latestInputs[0] == StickInput.Up ||
-                    latestInputs[0] == StickInput.UpForward ||
-                    latestInputs[0] == StickInput.UpBack)
-                {
-                    result = CommandInput.Jump;
                 }
             }
             return result;
@@ -299,27 +289,13 @@ namespace WST
                 }
             }
             stickInputs.Add(latestStickInput);
-            if (stickInputs.Count == 1)
+            if (Command() == CommandInput.FF || Command() == CommandInput.BB)
             {
-                if (Command() == CommandInput.Jump)
-                {
-                    FGInput input = new FGInput();
-                    input.button = Button.None;
-                    input.stick = latestStickInput;
-                    input.commandInput = Command();
-                    visualizer.DoInput(input);
-                }
-            }
-            else if (stickInputs.Count == 2)
-            {
-                if (Command() == CommandInput.FF || Command() == CommandInput.BB)
-                {
-                    FGInput input = new FGInput();
-                    input.button = Button.None;
-                    input.stick = StickInput.Neutral;
-                    input.commandInput = Command();
-                    visualizer.DoInput(input);
-                }
+                FGInput input = new FGInput();
+                input.button = Button.None;
+                input.stick = StickInput.Neutral;
+                input.commandInput = Command();
+                DoInput(input);
             }
         }
 
@@ -374,16 +350,20 @@ namespace WST
                 input.button = button;
                 input.stick = latestStickInput;
                 input.commandInput = Command();
-                visualizer.DoInput(input);
+                DoInput(input);
             }
         }
 
-        public void ChangeDirection(int dir)
+        void DoInput(FGInput input)
         {
-            directionMod = dir;
-            Vector3 scale = ryu.localScale;
-            scale.x = ryuX * directionMod;
-            ryu.localScale = scale;
+            if (player != null)
+            {
+                player.DoInput(input);
+            }
+            if (visualizer != null)
+            {
+                visualizer.DoInput(input);
+            }
         }
     }
 }

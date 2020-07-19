@@ -442,14 +442,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 438012478ad7cba4eac8bea53783ef67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 0}
   visualizer: {fileID: 630145500}
-  playerNum: 1
-  directionMod: 1
   stickInputs: 
   stickInputWindow: 0.2
   chargeTime: 0.5
   chargeWindow: 0.1
-  ryu: {fileID: 1701629362}
+  charge: 0
 --- !u!1 &648364985
 GameObject:
   m_ObjectHideFlags: 0
