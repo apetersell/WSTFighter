@@ -78,6 +78,11 @@ public class InputVisualizer : MonoBehaviour
                 direction = input.stick.ToString();
             }
         }
+        if (input.button == WST.Button.None && input.commandInput == CommandInput.Jump)
+        {
+            direction = input.commandInput.ToString();
+            button = input.stick.ToString();
+        }
         commandText.text = string.Format("{0} {1}", direction, button);
         
     }

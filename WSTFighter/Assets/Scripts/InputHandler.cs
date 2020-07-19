@@ -19,6 +19,7 @@ namespace WST
         Charge_ForwardToBack,
         Charge_DownToUp,
         Charge_UpToDown,
+        Jump
     }
 
     public enum Button
@@ -87,11 +88,11 @@ namespace WST
         {
             float stickX = stickPos.x * directionMod;
             StickInput result = StickInput.Neutral;
-            if (stickX > .5f && stickPos.y < 0.5f && stickPos.y > -0.5f)
+            if (stickX > .5f && stickPos.y < 0.05f && stickPos.y > -0.05f)
             {
                 result = StickInput.Forward;
             }
-            else if (stickX > .5f && stickPos.y > 0.5f)
+            else if (stickX > .5f && stickPos.y >= 0.05f)
             {
                 result = StickInput.UpForward;
             }
@@ -103,7 +104,7 @@ namespace WST
             {
                 result = StickInput.Back;
             }
-            else if (stickX < -.5f && stickPos.y > 0.5f)
+            else if (stickX < -.5f && stickPos.y >= 0.05f)
             {
                 result = StickInput.UpBack;
             }
@@ -215,7 +216,15 @@ namespace WST
                     }
                 }
             }
-            Debug.Log("COMMAND: " + result);
+            else if (latestInputs.Count == 1)
+            {
+                if (latestInputs[0] == StickInput.Up ||
+                    latestInputs[0] == StickInput.UpForward ||
+                    latestInputs[0] == StickInput.UpBack)
+                {
+                    result = CommandInput.Jump;
+                }
+            }
             return result;
         }
 
@@ -290,6 +299,28 @@ namespace WST
                 }
             }
             stickInputs.Add(latestStickInput);
+            if (stickInputs.Count == 1)
+            {
+                if (Command() == CommandInput.Jump)
+                {
+                    FGInput input = new FGInput();
+                    input.button = Button.None;
+                    input.stick = latestStickInput;
+                    input.commandInput = Command();
+                    visualizer.DoInput(input);
+                }
+            }
+            else if (stickInputs.Count == 2)
+            {
+                if (Command() == CommandInput.FF || Command() == CommandInput.BB)
+                {
+                    FGInput input = new FGInput();
+                    input.button = Button.None;
+                    input.stick = StickInput.Neutral;
+                    input.commandInput = Command();
+                    visualizer.DoInput(input);
+                }
+            }
         }
 
         void RemoveOldestInput()
