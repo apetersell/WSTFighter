@@ -68,6 +68,13 @@ namespace WST
         public float chargeWindow;
         float stickInputTimer;
         bool charged => chargeTimer >= chargeTime;
+        public Transform ryu;
+        float ryuX;
+
+        private void Awake()
+        {
+            ryuX = ryu.localScale.x;
+        }
 
         void Update()
         {
@@ -338,6 +345,14 @@ namespace WST
                 input.commandInput = Command();
                 visualizer.DoInput(input);
             }
+        }
+
+        public void ChangeDirection(int dir)
+        {
+            directionMod = dir;
+            Vector3 scale = ryu.localScale;
+            scale.x = ryuX * directionMod;
+            ryu.localScale = scale;
         }
     }
 }
