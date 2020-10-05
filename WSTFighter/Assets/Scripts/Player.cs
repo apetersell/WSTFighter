@@ -1,16 +1,24 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using WST;
+
+[System.Serializable]
+public struct AcceptedInputs
+{
+    public bool canJump;
+    public bool canMove;
+    public bool canAttack;
+}
 
 public class Player : MonoBehaviour
 {
+    
+    [Header("Basics")]
     public int playerNum;
     public Transform visual;
     Rigidbody2D rb;
-    public float walkSpeed;
-    public float runSpeed;
-    public float jumpForce;
     public Transform footOrigin;
     public float footRaycastDistance;
     public int facingMod;
@@ -18,21 +26,39 @@ public class Player : MonoBehaviour
     Player otherPlayer;
     public Vector2 leftStickPos;
     float xScale;
+    bool needsToReturnToNeutral;
+    public AcceptedInputs acceptedInputs;
+
+    [Header("Movement")]
+    public float walkSpeed;
+    public float runSpeed;
+    public float airDashDistance;
+    public float groundDashDistance;
+    public float airDashTime;
+    public float groundDashTime;
+    Vector2 dash_start;
+    Vector2 dash_end;
+    TweenID dashTween;
+    bool running;
+    bool dashing => dashTween.isTweening;
+
+    [Header("Jump")]
+    public float jumpForce;
+    public float airJumpForce;
+    public float runJumpForce;
+    public int maxAirJumps;
+    int airJumps;
     Vector2 jumpAngle;
-    bool hasJumped;
+
 
     public void InitPlayer()
     {
+        ToggleInputs(true, true, true);
         transform.position = MatchManager.instance.startingPositions[idx];
         otherPlayer = MatchManager.instance.OtherPlayer(playerNum);
         xScale = visual.localScale.x;
         rb = GetComponent<Rigidbody2D>();
         TurnAround();
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-        
     }
 
     // Update is called once per frame
@@ -43,8 +69,12 @@ public class Player : MonoBehaviour
         DetectJump();
         if (Grounded())
         {
-            Movement();
-            TurnAround();
+            if (acceptedInputs.canMove)
+            {
+                Movement();
+                TurnAround();
+            }
+            airJumps = 0;
         }
        
     }
@@ -54,21 +84,29 @@ public class Player : MonoBehaviour
         if (Mathf.Abs(leftStickPos.x) > 0.4f)
         {
             Vector3 pos = transform.position;
-            pos.x += leftStickPos.x * walkSpeed;
+            float moveMod = running ? (runSpeed * facingMod) * Time.deltaTime : (leftStickPos.x * walkSpeed) * Time.deltaTime;
+            pos.x += moveMod;
             if (WithinDistance(pos))
             {
                 transform.position = pos;
             }
         }
+        else
+        {
+            running = false;
+        }
     }
 
     void TurnAround()
     {
-        Vector3 direction = otherPlayer.transform.position - transform.position;
-        facingMod = direction.x >= 0 ? 1 : -1;
-        Vector3 scale = visual.localScale;
-        scale.x = xScale * facingMod;
-        visual.localScale = scale;
+        if (!running)
+        {
+            Vector3 direction = otherPlayer.transform.position - transform.position;
+            facingMod = direction.x >= 0 ? 1 : -1;
+            Vector3 scale = visual.localScale;
+            scale.x = xScale * facingMod;
+            visual.localScale = scale;
+        }
     }
 
     bool Grounded()
@@ -102,40 +140,62 @@ public class Player : MonoBehaviour
 
     void DetectJump()
     {
-        if (Grounded() && !hasJumped)
+        if (JumpInput() != StickInput.Neutral)
         {
-            if (JumpInput() != StickInput.Neutral)
-            {
-                FGInput input = new FGInput();
-                input.button = Button.None;
-                input.stick = JumpInput();
-                input.commandInput = CommandInput.Jump;
-                DoInput(input);
-            }
-        }
-        if (Grounded() && hasJumped)
-        {
-            if (JumpInput() == StickInput.Neutral)
-            {
-                hasJumped = false;
-            }
+            FGInput input = new FGInput();
+            input.button = Button.None;
+            input.stick = JumpInput();
+            input.commandInput = CommandInput.Jump;
+            DoInput(input);
         }
     }
 
     void Jump()
     {
-        if(Grounded() && !hasJumped)
+        if(Grounded() && !needsToReturnToNeutral)
         {
             rb.velocity = jumpAngle * jumpForce;
-            hasJumped = true;
+            needsToReturnToNeutral = true;
         }
+        if (!Grounded() && airJumps < maxAirJumps && !needsToReturnToNeutral)
+        {
+            rb.velocity = jumpAngle * airJumpForce;
+            needsToReturnToNeutral = true;
+            airJumps++;
+        }
+        running = false;
     }
 
     public virtual void DoInput(FGInput input)
     {
-       if (input.commandInput == CommandInput.Jump)
+       if (acceptedInputs.canJump)
         {
-            Jump();
+            if (input.commandInput == CommandInput.Jump)
+            {
+                Jump();
+            }
+        }
+      if (acceptedInputs.canMove)
+        {
+            if (input.commandInput == CommandInput.FF)
+            {
+                if (Grounded())
+                {
+                    running = true;
+                }
+                else
+                {
+                    Dash(true);
+                }
+            }
+            if (input.commandInput == CommandInput.BB)
+            {
+                Dash(false);
+            }
+        }
+      if (acceptedInputs.canAttack)
+        {
+
         }
     }
 
@@ -143,25 +203,66 @@ public class Player : MonoBehaviour
     {
         StickInput result;
         float stickX = leftStickPos.x * facingMod;
-        if (stickX > -.5f && stickX < .5f && leftStickPos.y > 0.05f)
+        if (stickX > -.4f && stickX < .4f && leftStickPos.y > 0.4f)
         {
             result = StickInput.Up;
             jumpAngle = new Vector2(0, 1);
         }
-        else if (stickX > .5f && leftStickPos.y >= 0.05f)
+        else if (stickX > .4f && leftStickPos.y >= 0.4f)
         {
             result = StickInput.UpForward;
-            jumpAngle = new Vector2(facingMod * .25f, 1);
+            float force = running ? .5f : .25f; 
+            jumpAngle = new Vector2(facingMod * force, 1);
         }
-        else if (stickX < -.5f && leftStickPos.y >= 0.05f)
+        else if (stickX < -.4f && leftStickPos.y >= 0.4f)
         {
             result = StickInput.UpBack;
             jumpAngle = new Vector2(facingMod * -.25f, 1);
         }
         else
         {
+            needsToReturnToNeutral = false;
             result = StickInput.Neutral;
         }
         return result;
+    }
+
+    void ToggleInputs(bool jump, bool move, bool attack)
+    {
+        acceptedInputs.canJump = jump;
+        acceptedInputs.canMove = move;
+        acceptedInputs.canAttack = attack;
+    }
+
+    void Dash(bool forward)
+    {
+        ToggleInputs(false, false, false);
+        float time = Grounded() ? groundDashTime : airDashTime;
+        float distance = Grounded() ? groundDashDistance : airDashDistance;
+        float mod = forward ? facingMod : -facingMod;
+        dash_start = transform.position;
+        dash_end = dash_start;
+        dash_end.x = Mathf.Clamp(dash_start.x + (distance * mod), MatchManager.instance.xBounds.x, MatchManager.instance.xBounds.y);
+        while(!WithinDistance(dash_end))
+        {
+            float adjustMod = forward ? -.01f : .01f;
+            dash_end.x += adjustMod;
+        }
+        LeanTween.value(0, 1, time)
+            .setOnUpdate(DashUpdate)
+            .setTweenId(ref dashTween)
+            .setOnComplete(DashComplete);
+    }
+
+    void DashUpdate(float t)
+    {
+        Vector2 pos = dash_start;
+        pos.x = Mathf.Lerp(dash_start.x, dash_end.x, t);
+        transform.position = pos;
+    }
+
+    void DashComplete()
+    {
+        ToggleInputs(true, true, true);
     }
 }

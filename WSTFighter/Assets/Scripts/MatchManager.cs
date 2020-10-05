@@ -18,6 +18,7 @@ public class MatchManager : MonoBehaviour
     public float maxPlayerDistance;
 
     public Vector3[] startingPositions;
+    public Vector2 xBounds;
 
     float comboCounter = 1;
     float timer;
